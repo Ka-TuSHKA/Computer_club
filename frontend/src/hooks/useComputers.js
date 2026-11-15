@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { fetchPcs } from '../api/bookingApi';
+import { fetchPcs, createPc, updatePc, deletePc as apiDeletePc } from '../api/bookingApi';
 
 export const useComputers = (token) => {
   const [pcs, setPcs] = useState([]);
@@ -16,19 +16,26 @@ export const useComputers = (token) => {
     if (token) loadData();
   }, [token]);
 
-  // Имитация сохранения (в реальности здесь будет POST/PUT запрос)
-  const savePc = (formData, mode, selectedPc) => {
-    if (mode === 'create') {
-      const newPc = { ...formData, id: Date.now() };
-      setPcs([...pcs, newPc]);
-    } else if (mode === 'edit') {
-      setPcs(pcs.map(p => p.id === selectedPc.id ? { ...p, ...formData } : p));
+  const savePc = async (formData, mode, selectedPc) => {
+    try {
+      if (mode === 'create') {
+        await createPc(token, formData);
+      } else if (mode === 'edit') {
+        await updatePc(token, selectedPc.id, formData);
+      }
+      loadData(); // Перезагружаем список с сервера
+    } catch (err) {
+      alert(err.message);
     }
   };
 
-  // Имитация удаления (в реальности DELETE запрос)
-  const deletePc = (id) => {
-    setPcs(pcs.filter(p => p.id !== id));
+  const deletePc = async (id) => {
+    try {
+      await apiDeletePc(token, id);
+      loadData(); // Перезагружаем список с сервера
+    } catch (err) {
+      alert(err.message);
+    }
   };
 
   return { pcs, loading, savePc, deletePc };

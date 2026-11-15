@@ -46,7 +46,8 @@ export default function SeatMap({ pcs, onSelectPc, selectedPc, query }) {
       switch (status) {
         case 'FREE': return 'bg-emerald-500 border-emerald-400 text-white shadow-[0_0_20px_rgba(16,185,129,0.5)] cursor-pointer';
         case 'BOOKED': return 'bg-sky-500 border-sky-400 text-white shadow-[0_0_20px_rgba(14,165,233,0.5)] cursor-pointer';
-        case 'REPAIR': return 'bg-orange-500 border-orange-400 text-white shadow-[0_0_20px_rgba(249,115,22,0.5)] cursor-not-allowed';
+        // ИСПРАВЛЕНО: cursor-pointer вместо not-allowed
+        case 'REPAIR': return 'bg-orange-500 border-orange-400 text-white shadow-[0_0_20px_rgba(249,115,22,0.5)] cursor-pointer';
         default: return 'bg-zinc-600 border-zinc-500 text-white';
       }
     }
@@ -54,10 +55,10 @@ export default function SeatMap({ pcs, onSelectPc, selectedPc, query }) {
       case 'FREE':
         return 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 hover:border-emerald-500/50 cursor-pointer';
       case 'BOOKED':
-        // Убрали cursor-not-allowed, теперь можно кликать
         return 'bg-sky-500/10 border-sky-500/30 text-sky-400 hover:bg-sky-500/20 hover:border-sky-500/50 cursor-pointer';
       case 'REPAIR':
-        return 'bg-orange-500/10 border-orange-500/30 text-orange-400 hover:bg-orange-500/20 hover:border-orange-500/50 cursor-not-allowed';
+        // ИСПРАВЛЕНО: cursor-pointer вместо not-allowed
+        return 'bg-orange-500/10 border-orange-500/30 text-orange-400 hover:bg-orange-500/20 hover:border-orange-500/50 cursor-pointer';
       default:
         return 'bg-zinc-800 border-zinc-700 text-zinc-400';
     }

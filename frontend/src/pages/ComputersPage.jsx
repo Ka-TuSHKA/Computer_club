@@ -107,8 +107,9 @@ export default function ComputersPage() {
                       </button>
                       <button
                         onClick={() => handleDelete(pc.id)}
-                        className="p-1.5 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
-                        title="Удалить"
+                        disabled={pc.status === 'BOOKED'} // <-- Блокируем кнопку
+                        className="p-1.5 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-zinc-500"
+                        title={pc.status === 'BOOKED' ? "Нельзя удалить занятый ПК" : "Удалить"}
                       >
                         <Icon.Delete />
                       </button>

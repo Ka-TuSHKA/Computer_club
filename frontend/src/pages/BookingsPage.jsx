@@ -1,7 +1,6 @@
 import { useBookingsList } from '../hooks/useBookingsList';
 import { getBookingStatusName, formatDate, formatTime } from '../utils/formatters';
 
-// БЕЙДЖ СТАТУСА
 const StatusBadge = ({ status }) => {
   let colorClass = 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20';
 
@@ -41,7 +40,6 @@ export default function BookingsPage() {
               <th className="p-4">Начало</th>
               <th className="p-4">Окончание</th>
               <th className="p-4">Статус</th>
-              {/* Колонка действий теперь доступна всем */}
               <th className="p-4 text-right">Действия</th>
             </tr>
           </thead>
@@ -53,54 +51,66 @@ export default function BookingsPage() {
                 </td>
               </tr>
             ) : (
-              bookings.map(b => (
-                <tr key={b.id} className="hover:bg-zinc-900/50 transition-colors">
-                  <td className="p-4 font-mono text-sm text-zinc-500">#{b.id}</td>
-                  <td className="p-4 font-mono text-indigo-400">{b.pcNumber}</td>
+              bookings.map(b => {
+                // Проверяем, истекло ли время бронирования
+                const isExpired = new Date(b.endTime) <= new Date();
 
-                  {role === 'ADMIN' && <td className="p-4 text-zinc-300">{b.username}</td>}
+                return (
+                  <tr key={b.id} className="hover:bg-zinc-900/50 transition-colors">
+                    <td className="p-4 font-mono text-sm text-zinc-500">#{b.id}</td>
+                    <td className="p-4 font-mono text-indigo-400">{b.pcNumber}</td>
 
-                  <td className="p-4 text-sm text-zinc-300">{formatDate(b.startTime)}</td>
-                  <td className="p-4 text-sm text-zinc-300">{formatTime(b.startTime)}</td>
-                  <td className="p-4 text-sm text-zinc-300">{formatTime(b.endTime)}</td>
+                    {role === 'ADMIN' && <td className="p-4 text-zinc-300">{b.username}</td>}
 
-                  <td className="p-4"><StatusBadge status={b.status} /></td>
+                    <td className="p-4 text-sm text-zinc-300">{formatDate(b.startTime)}</td>
+                    <td className="p-4 text-sm text-zinc-300">{formatTime(b.startTime)}</td>
+                    <td className="p-4 text-sm text-zinc-300">{formatTime(b.endTime)}</td>
 
-                  <td className="p-4 text-right">
-                    <div className="flex justify-end gap-2">
+                    <td className="p-4"><StatusBadge status={b.status} /></td>
 
-                      {role === 'ADMIN' && b.status === 'PENDING' && (
-                        <button
-                          onClick={() => confirm(b.id)}
-                          className="px-3 py-1.5 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 rounded text-xs font-bold transition-colors"
-                        >
-                          Подтвердить
-                        </button>
-                      )}
+                    <td className="p-4 text-right">
+                      <div className="flex justify-end gap-2 items-center">
 
-                      {(b.status === 'PENDING' || b.status === 'CONFIRMED') && (
-                        <button
-                          onClick={() => cancel(b.id)}
-                          className="px-3 py-1.5 bg-red-500/10 text-red-400 hover:bg-red-500/20 rounded text-xs font-bold transition-colors"
-                        >
-                          Отменить
-                        </button>
-                      )}
+                        {/* 1. Кнопка "Подтвердить" (Админ, статус PENDING) */}
+                        {role === 'ADMIN' && b.status === 'PENDING' && (
+                          <button
+                            onClick={() => confirm(b.id)}
+                            className="px-3 py-1.5 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 rounded text-xs font-bold transition-colors"
+                          >
+                            Подтвердить
+                          </button>
+                        )}
 
-                      {/* 3. Кнопка для АДМИНА (Начать сеанс) */}
-                      {role === 'ADMIN' && b.status === 'CONFIRMED' && (
-                        <button
-                          onClick={() => startSession(b.id)}
-                          className="px-3 py-1.5 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 rounded text-xs font-bold transition-colors"
-                        >
-                          Начать сеанс
-                        </button>
-                      )}
+                        {/* 2. Кнопка "Отменить" (Доступна всем, для PENDING и CONFIRMED) */}
+                        {(b.status === 'PENDING' || b.status === 'CONFIRMED') && (
+                          <button
+                            onClick={() => cancel(b.id)}
+                            className="px-3 py-1.5 bg-red-500/10 text-red-400 hover:bg-red-500/20 rounded text-xs font-bold transition-colors"
+                          >
+                            Отменить
+                          </button>
+                        )}
 
-                    </div>
-                  </td>
-                </tr>
-              ))
+                        {/* 3. Кнопка "Начать сеанс" (Админ, статус CONFIRMED, время НЕ истекло) */}
+                        {role === 'ADMIN' && b.status === 'CONFIRMED' && !isExpired && (
+                          <button
+                            onClick={() => startSession(b.id)}
+                            className="px-3 py-1.5 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 rounded text-xs font-bold transition-colors"
+                          >
+                            Начать сеанс
+                          </button>
+                        )}
+
+                        {/* 4. Заглушка "Время истекло" (Админ, статус CONFIRMED, время УЖЕ истекло) */}
+                        {role === 'ADMIN' && b.status === 'CONFIRMED' && isExpired && (
+                          <span className="text-xs text-zinc-500 italic px-2">Время истекло</span>
+                        )}
+
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>

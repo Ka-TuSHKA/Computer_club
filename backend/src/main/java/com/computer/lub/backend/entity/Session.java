@@ -20,11 +20,15 @@ public class Session {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @OneToOne
+    @JoinColumn(name = "booking_id")
+    private Booking booking;
+
     @Column(nullable = false)
     private LocalDateTime startTime;
 
     private LocalDateTime endTime;
 
     @Column(nullable = false)
-    private String status; // "ACTIVE" или "FINISHED"
+    private String status;
 }

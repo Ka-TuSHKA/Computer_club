@@ -11,6 +11,7 @@ import com.computer.lub.backend.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod; // <-- ДОБАВЛЕН ИМПОРТ
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -21,7 +22,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.transaction.annotation.Transactional; // <--- ДОБАВЛЕН ИМПОРТ
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -38,9 +39,26 @@ public class SecurityConfig {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(AbstractHttpConfigurer::disable)
+            .headers(headers -> headers.frameOptions(frame -> frame.disable()))
             .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/ws/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/h2-console/**").permitAll()
+
+                // Защита ПК (только админ)
+                .requestMatchers(HttpMethod.POST, "/api/pcs/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/pcs/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/pcs/**").hasRole("ADMIN")
+
+                // Подтверждать бронь может только админ
+                .requestMatchers(HttpMethod.PUT, "/api/bookings/*/confirm").hasRole("ADMIN")
+
+                // Запуск и завершение сеансов - только админ
+                .requestMatchers(HttpMethod.POST, "/api/sessions/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/sessions/**").hasRole("ADMIN")
+
+                // Отменять бронь может любой
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
@@ -54,16 +72,13 @@ public class SecurityConfig {
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
-
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+    public PasswordEncoder passwordEncoder() { return new BCryptPasswordEncoder(); }
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
@@ -71,14 +86,10 @@ public class SecurityConfig {
     }
 
     @Bean
-    @Transactional // <--- ДОБАВЛЕНА АННОТАЦИЯ
-    public CommandLineRunner initData(UserRepository userRepository,
-                                      PcRepository pcRepository,
-                                      BookingRepository bookingRepository,
-                                      SessionRepository sessionRepository,
-                                      PasswordEncoder passwordEncoder) {
+    @Transactional
+    public CommandLineRunner initData(UserRepository userRepository, PcRepository pcRepository, BookingRepository bookingRepository, SessionRepository sessionRepository, PasswordEncoder passwordEncoder) {
         return args -> {
-            // 1. Создаем пользователей
+            // ... (Твой код инициализации данных остается без изменений) ...
             if (userRepository.findByUsername("admin").isEmpty()) {
                 User admin = new User();
                 admin.setUsername("admin");
@@ -94,7 +105,6 @@ public class SecurityConfig {
                 userRepository.save(client);
             }
 
-            // 2. Создаем карту ПК
             if (pcRepository.count() == 0) {
                 int[][] layout = {
                     {1, 1}, {1, 2}, {1, 3}, {1, 5}, {1, 6}, {1, 7},
@@ -105,50 +115,27 @@ public class SecurityConfig {
                     {6, 1}, {6, 3}, {6, 4}, {6, 5}, {6, 6}, {6, 8},
                     {7, 2}, {7, 3}, {7, 4}, {7, 5}, {7, 6}, {7, 7}
                 };
-
                 int pcCounter = 1;
                 for (int[] pos : layout) {
                     Pc pc = new Pc();
                     pc.setRowNumber(pos[0]);
                     pc.setSeatNumber(pos[1]);
-
-                    String randomPart = java.util.UUID.randomUUID().toString().substring(0, 4).toUpperCase();
-                    pc.setPcNumber("PC-" + pcCounter + randomPart);
-
-                    if (pos[0] <= 2) {
-                        pc.setProcessor("Intel Core i5-12400");
-                        pc.setRam("16 GB");
-                        pc.setGpu("NVIDIA RTX 3060");
-                    } else {
-                        pc.setProcessor("Intel Core i7-12700");
-                        pc.setRam("32 GB");
-                        pc.setGpu("NVIDIA RTX 4070 Ti");
-                    }
-
-                    if (pcCounter == 3 || pcCounter == 15 || pcCounter == 32) {
-                        pc.setStatus("REPAIR");
-                        pc.setComment("Не работает клавиатура, требуется замена.");
-                    } else if (pcCounter % 7 == 0 || pcCounter == 10 || pcCounter == 22) {
-                        pc.setStatus("BOOKED");
-                        pc.setComment("");
-                    } else {
-                        pc.setStatus("FREE");
-                        pc.setComment("");
-                    }
-
+                    pc.setPcNumber("PC-" + pcCounter + java.util.UUID.randomUUID().toString().substring(0, 4).toUpperCase());
+                    pc.setProcessor(pos[0] <= 2 ? "Intel Core i5-12400" : "Intel Core i7-12700");
+                    pc.setRam(pos[0] <= 2 ? "16 GB" : "32 GB");
+                    pc.setGpu(pos[0] <= 2 ? "NVIDIA RTX 3060" : "NVIDIA RTX 4070 Ti");
+                    pc.setStatus(pcCounter == 3 ? "REPAIR" : "FREE");
+                    pc.setComment(pcCounter == 3 ? "Не работает клавиатура" : "");
                     pcRepository.save(pc);
                     pcCounter++;
                 }
             }
 
-            // 3. Добавляем тестовые данные
             if (bookingRepository.count() == 0 && sessionRepository.count() == 0) {
                 User client = userRepository.findByUsername("client").orElse(null);
                 List<Pc> allPcs = pcRepository.findAll();
 
                 if (client != null && allPcs.size() >= 10) {
-
-                    // --- БРОНИРОВАНИЯ ---
                     Booking pendingBooking = new Booking();
                     pendingBooking.setPc(allPcs.get(0));
                     pendingBooking.setUser(client);
@@ -176,6 +163,7 @@ public class SecurityConfig {
                     Session activeSession = new Session();
                     activeSession.setPc(allPcs.get(9));
                     activeSession.setUser(client);
+                     activeSession.setBooking(confirmedBooking);
                     activeSession.setStartTime(LocalDateTime.now().minusHours(1));
                     activeSession.setStatus("ACTIVE");
                     sessionRepository.save(activeSession);

@@ -7,4 +7,5 @@ import java.util.List;
 public interface SessionRepository extends JpaRepository<Session, Long> {
     List<Session> findAllByOrderByStartTimeDesc();
     List<Session> findByUserUsernameOrderByStartTimeDesc(String username);
+    List<Session> findByPcIdAndStatus(Long pcId, String status);
 }

@@ -3,7 +3,6 @@ import { useComputers } from '../hooks/useComputers';
 import PlaceInfo from '../components/PlaceInfo';
 import { getPcStatusName } from '../utils/formatters';
 
-// ИКОНКИ
 const Icon = {
   Plus: ({ className = 'w-4 h-4' }) => (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
@@ -16,7 +15,6 @@ const Icon = {
   ),
 };
 
-// БЕЙДЖ СТАТУСА
 const StatusBadge = ({ status }) => {
   let colorClass = 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20';
 
@@ -58,7 +56,7 @@ export default function ComputersPage() {
     <div className="w-full max-w-6xl mx-auto">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-white">
-          Управление компьютерами <span className="text-zinc-500 text-lg font-normal"></span>
+          Управление компьютерами
         </h2>
 
         {role === 'ADMIN' && (
@@ -107,7 +105,7 @@ export default function ComputersPage() {
                       </button>
                       <button
                         onClick={() => handleDelete(pc.id)}
-                        disabled={pc.status === 'BOOKED'} // <-- Блокируем кнопку
+                        disabled={pc.status === 'BOOKED'}
                         className="p-1.5 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-zinc-500"
                         title={pc.status === 'BOOKED' ? "Нельзя удалить занятый ПК" : "Удалить"}
                       >

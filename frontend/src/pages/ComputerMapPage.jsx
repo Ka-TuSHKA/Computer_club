@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { usePcs } from '../hooks/usePcs';
 import SeatMap from '../components/SeatMap';
 import PlaceInfo from '../components/PlaceInfo';
@@ -12,18 +12,27 @@ export default function ComputerMapPage() {
   const [selectedPc, setSelectedPc] = useState(null);
   const [query, setQuery] = useState('');
 
+  // Храним ссылку на клиента
+  const stompClientRef = useRef(null);
+
   useEffect(() => {
     const socket = new SockJS('http://localhost:8080/ws');
     const stompClient = new Client({
       webSocketFactory: () => socket,
       onConnect: () => {
-        stompClient.subscribe('/topic/pcs', () => {
+        stompClient.subscribe('/topic/pcs', (message) => {
+          // При получении сигнала обновляем список
           loadPcs();
         });
       },
     });
+
     stompClient.activate();
-    return () => stompClient.deactivate();
+    stompClientRef.current = stompClient;
+
+    return () => {
+      stompClient.deactivate();
+    };
   }, [loadPcs]);
 
   if (loading) return <div className="text-zinc-500 animate-pulse p-6">Загрузка карты...</div>;

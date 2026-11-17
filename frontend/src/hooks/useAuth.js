@@ -16,7 +16,6 @@ export const useAuth = () => {
     try {
       if (isLogin) {
         const data = await loginUser(username, password);
-        // Сохраняем данные сессии
         localStorage.setItem('token', data.token);
         localStorage.setItem('role', data.role);
         localStorage.setItem('username', data.username);
@@ -24,7 +23,7 @@ export const useAuth = () => {
       } else {
         await registerUser(username, password);
         setSuccess('Успешно! Теперь войдите.');
-        onRegisterSuccess(); // Переключаем форму на вход
+        onRegisterSuccess();
       }
     } catch (err) {
       setError(err.message || 'Сервер недоступен');

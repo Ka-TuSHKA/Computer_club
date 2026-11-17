@@ -1,38 +1,58 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { fetchSessions, finishSession } from '../api/sessionApi';
+import { fetchSessions, finishSession, startWalkInSession } from '../api/sessionApi';
 
 export const useSessions = (token) => {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+  const [error, setError] = useState(null);
 
   const loadSessions = () => {
     if (!token) return;
     setLoading(true);
     fetchSessions(token)
-      .then(data => { setSessions(data); setLoading(false); })
-      .catch(err => { console.error(err); setLoading(false); });
+      .then((data) => {
+        setSessions(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message);
+        setLoading(false);
+      });
   };
 
   useEffect(() => {
-    if (!token) {
-      navigate('/');
-      return;
-    }
     loadSessions();
-  }, [token, navigate]);
+  }, [token]);
 
   const handleFinish = async (id) => {
-    if(window.confirm('Завершить этот сеанс? ПК станет свободным.')) {
+    if (window.confirm('Завершить этот игровой сеанс?')) {
+      setError(null);
       try {
         await finishSession(token, id);
-        loadSessions(); // Обновляем таблицу после завершения
+        loadSessions();
       } catch (err) {
-        alert('Ошибка при завершении сеанса');
+        setError(err.message || 'Ошибка при завершении сеанса');
+        alert(err.message);
       }
     }
   };
 
-  return { sessions, loading, finish: handleFinish };
+  const handleCreateWalkIn = async (pcId, username, duration) => {
+    setError(null);
+    try {
+      await startWalkInSession(token, pcId, username, duration);
+      loadSessions();
+    } catch (err) {
+      setError(err.message || 'Ошибка при создании сеанса');
+      throw err;
+    }
+  };
+
+  return {
+    sessions,
+    loading,
+    error,
+    finish: handleFinish,
+    createWalkIn: handleCreateWalkIn,
+  };
 };

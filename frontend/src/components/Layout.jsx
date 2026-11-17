@@ -8,6 +8,9 @@ const Icon = {
   Map: ({ className = 'w-5 h-5' }) => (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>
   ),
+  User: ({ className = 'w-5 h-5' }) => (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+  ),
   Calendar: ({ className = 'w-5 h-5' }) => (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
   ),
@@ -19,11 +22,14 @@ const Icon = {
   ),
 };
 
+// Посетителю доступны только карта и личный кабинет,
+// администратору — дополнительно панель управления
 const NAV_ITEMS = [
   { path: '/map', label: 'Карта клуба', icon: Icon.Map, adminOnly: false },
+  //{ path: '/account', label: 'Личный кабинет', icon: Icon.User, adminOnly: false },
   { path: '/computers', label: 'Компьютеры', icon: Icon.Monitor, adminOnly: true },
-  { path: '/bookings', label: 'Бронирования', icon: Icon.Calendar, adminOnly: false },
-  { path: '/sessions', label: 'Сеансы', icon: Icon.Play, adminOnly: false }
+  { path: '/bookings', label: 'Бронирования', icon: Icon.Calendar, adminOnly: true },
+  { path: '/sessions', label: 'Сеансы', icon: Icon.Play, adminOnly: true }
 ];
 
 export default function Layout() {
@@ -82,7 +88,7 @@ export default function Layout() {
       <div className="flex-1 flex flex-col min-w-0">
 
         <header className="h-16 shrink-0 bg-zinc-950 border-b border-zinc-800/80 flex items-center justify-between gap-4 px-4 lg:px-6">
-          <h1 className="text-lg font-bold text-zinc-100 whitespace-nowrap">Панель управления</h1>
+          <h1 className="text-lg font-bold text-zinc-100 whitespace-nowrap"></h1>
 
           <div className="flex items-center gap-2.5">
             <div className="flex items-center gap-2.5 pl-2">
@@ -96,7 +102,6 @@ export default function Layout() {
             </div>
           </div>
         </header>
-
 
         <main className="flex-1 overflow-auto dark-scroll p-4 lg:p-6 flex flex-col">
           <Outlet />

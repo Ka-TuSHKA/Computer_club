@@ -1,3 +1,5 @@
+import { getPcStatusName } from '../utils/formatters';
+
 const Icons = {
   Monitor: ({ className }) => (
     <svg className={className || 'w-4 h-4'} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -15,10 +17,16 @@ const Icons = {
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
     </svg>
   ),
+  Play: ({ className }) => (
+    <svg className={className || 'w-4 h-4'} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3l14 9-14 9V3z" />
+    </svg>
+  ),
 };
 
 const STATUS_ICON = {
   FREE: Icons.Monitor,
+  IN_USE: Icons.Play,
   BOOKED: Icons.Calendar,
   REPAIR: Icons.Wrench,
 };
@@ -45,8 +53,8 @@ export default function SeatMap({ pcs, onSelectPc, selectedPc, query }) {
     if (selected) {
       switch (status) {
         case 'FREE': return 'bg-emerald-500 border-emerald-400 text-white shadow-[0_0_20px_rgba(16,185,129,0.5)] cursor-pointer';
+        case 'IN_USE': return 'bg-red-500 border-red-400 text-white shadow-[0_0_20px_rgba(239,68,68,0.5)] cursor-pointer';
         case 'BOOKED': return 'bg-sky-500 border-sky-400 text-white shadow-[0_0_20px_rgba(14,165,233,0.5)] cursor-pointer';
-        // ИСПРАВЛЕНО: cursor-pointer вместо not-allowed
         case 'REPAIR': return 'bg-orange-500 border-orange-400 text-white shadow-[0_0_20px_rgba(249,115,22,0.5)] cursor-pointer';
         default: return 'bg-zinc-600 border-zinc-500 text-white';
       }
@@ -54,10 +62,11 @@ export default function SeatMap({ pcs, onSelectPc, selectedPc, query }) {
     switch (status) {
       case 'FREE':
         return 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 hover:border-emerald-500/50 cursor-pointer';
+      case 'IN_USE':
+        return 'bg-red-500/10 border-red-500/30 text-red-400 hover:bg-red-500/20 hover:border-red-500/50 cursor-pointer';
       case 'BOOKED':
         return 'bg-sky-500/10 border-sky-500/30 text-sky-400 hover:bg-sky-500/20 hover:border-sky-500/50 cursor-pointer';
       case 'REPAIR':
-        // ИСПРАВЛЕНО: cursor-pointer вместо not-allowed
         return 'bg-orange-500/10 border-orange-500/30 text-orange-400 hover:bg-orange-500/20 hover:border-orange-500/50 cursor-pointer';
       default:
         return 'bg-zinc-800 border-zinc-700 text-zinc-400';
@@ -80,7 +89,8 @@ export default function SeatMap({ pcs, onSelectPc, selectedPc, query }) {
                     return (
                       <div
                         key={`empty-${rowNum}-${seatNum}`}
-                        className="w-20 h-20 sm:w-24 sm:h-24 shrink-0 rounded-xl bg-zinc-800/30 border border-zinc-800/50"
+                        // ИСПРАВЛЕНО: Размеры пустых мест теперь совпадают с карточками ПК
+                        className="w-24 h-24 sm:w-28 sm:h-28 shrink-0 rounded-xl bg-zinc-800/30 border border-zinc-800/50"
                       />
                     );
                   }
@@ -93,19 +103,19 @@ export default function SeatMap({ pcs, onSelectPc, selectedPc, query }) {
                     <div
                       key={pc.id}
                       onClick={() => onSelectPc(pc)}
-                      className={`w-20 h-20 sm:w-24 sm:h-24 shrink-0 rounded-xl border-2 p-2 flex flex-col justify-between transition-all duration-200 ${getCardStyle(pc.status, selected)} ${
+                      className={`w-24 h-24 sm:w-28 sm:h-28 shrink-0 rounded-xl border-2 p-2 flex flex-col justify-between transition-all duration-200 ${getCardStyle(pc.status, selected)} ${
                         dimmed ? 'opacity-20 pointer-events-none' : ''
                       }`}
                     >
-                      <div className="flex justify-between items-start gap-1">
-                        <span className="text-[11px] sm:text-xs font-bold leading-tight break-all">
+                      <div className="flex justify-between items-start gap-1 w-full">
+                        <span className="text-[11px] sm:text-xs font-bold leading-tight break-words line-clamp-2">
                           {pc.pcNumber || `Место ${pc.seatNumber}`}
                         </span>
                         <StatusIcon className="w-4 h-4 sm:w-5 sm:h-5 opacity-80 shrink-0" />
                       </div>
 
-                      <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider opacity-90">
-                        {pc.status === 'FREE' ? 'Свободен' : pc.status === 'BOOKED' ? 'Занят' : 'Ремонт'}
+                      <div className="w-full text-[9px] sm:text-[10px] font-bold uppercase tracking-tight opacity-90 truncate">
+                        {getPcStatusName(pc.status)}
                       </div>
                     </div>
                   );

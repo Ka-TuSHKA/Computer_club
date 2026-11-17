@@ -1,21 +1,23 @@
-import { useState, useEffect } from 'react';
-import { fetchPcs } from '../api/bookingApi';
+import { useState, useEffect, useCallback } from 'react';
+import { fetchPcs } from '../api/pcApi'; // или откуда вы берете ПК
 
 export const usePcs = (token) => {
   const [pcs, setPcs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const loadPcs = () => {
+  const loadPcs = useCallback(() => {
     if (!token) return;
     setLoading(true);
     fetchPcs(token)
       .then(data => { setPcs(data); setLoading(false); })
-      .catch(err => { console.error(err); setLoading(false); });
-  };
+      .catch(err => { setError(err.message); setLoading(false); });
+  }, [token]); // Зависит только от токена
 
+  // Первичная загрузка при монтировании
   useEffect(() => {
     loadPcs();
-  }, [token]);
+  }, [loadPcs]);
 
-  return { pcs, loading, loadPcs };
+  return { pcs, loading, error, loadPcs };
 };

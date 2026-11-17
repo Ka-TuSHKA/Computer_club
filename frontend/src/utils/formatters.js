@@ -6,7 +6,8 @@ const ROLES = {
 
 const PC_STATUSES = {
   FREE: 'Свободен',
-  BOOKED: 'Занят',
+  IN_USE: 'Занят',
+  BOOKED: 'Забронирован',
   REPAIR: 'Ремонт',
 };
 

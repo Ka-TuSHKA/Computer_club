@@ -40,6 +40,7 @@ export default function PlaceInfo({ pc, allPcs = [], token, role, onClose, refre
 
   useEffect(() => {
     if (mode === 'edit' && pc) {
+      // Сохраняем текущий статус (если он REPAIR или FREE, оставляем его, BOOKED при редактировании меняем на FREE)
       const initialStatus = pc.status === 'BOOKED' ? 'FREE' : (pc.status || 'FREE');
       setFormData({
         pcNumber: pc.pcNumber || '',
@@ -93,7 +94,7 @@ export default function PlaceInfo({ pc, allPcs = [], token, role, onClose, refre
     });
   };
 
-      const isTimeRangeAvailable = (startTime, durationMins) => {
+  const isTimeRangeAvailable = (startTime, durationMins) => {
     if (!startTime) return false;
 
     if (selectedDate === today) {
@@ -119,11 +120,13 @@ export default function PlaceInfo({ pc, allPcs = [], token, role, onClose, refre
   };
 
   const availableStartTimes = ALL_TIME_SLOTS.filter(time => isTimeRangeAvailable(time, selectedDuration));
-   useEffect(() => {
+
+  useEffect(() => {
     if (availableStartTimes.length > 0 && !availableStartTimes.includes(selectedTime)) {
       setSelectedTime(availableStartTimes[0]);
     }
   }, [availableStartTimes, selectedTime]);
+
   const handleDurationChange = (e) => {
     const newDuration = Number(e.target.value);
     setSelectedDuration(newDuration);
@@ -138,6 +141,7 @@ export default function PlaceInfo({ pc, allPcs = [], token, role, onClose, refre
   const isAdmin = role === 'ADMIN';
   const isBooked = pc?.status === 'BOOKED';
   const isRepair = pc?.status === 'REPAIR';
+  const isInUse = pc?.status === 'IN_USE';
 
   const calculateEndTime = (start, durationMinutes) => {
     if (!start) return '';
@@ -156,7 +160,6 @@ export default function PlaceInfo({ pc, allPcs = [], token, role, onClose, refre
   const endTime = calculateEndTime(selectedTime, selectedDuration);
   const canBook = !isRepair && availableStartTimes.length > 0;
 
-  // --- ПОИСК АКТИВНОЙ БРОНИ ДЛЯ АДМИНА ---
   const now = new Date().getTime();
   const activeBooking = realBusySlots.find(slot => {
     const start = new Date(slot.startTime).getTime();
@@ -192,26 +195,28 @@ export default function PlaceInfo({ pc, allPcs = [], token, role, onClose, refre
         {(mode === 'edit' || mode === 'create') ? (
           <form onSubmit={handleFormSubmit} className="space-y-3">
             <div className="grid grid-cols-2 gap-2">
-              <div>
+              <div className="min-w-0">
                 <label className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1 block">Номер ПК</label>
-                <input type="text" value={formData.pcNumber} onChange={(e) => setFormData({...formData, pcNumber: e.target.value})} required className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-300 outline-none focus:border-indigo-500" />
+                <input type="text" value={formData.pcNumber} onChange={(e) => setFormData({...formData, pcNumber: e.target.value})} required className="w-full min-w-0 bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-300 outline-none focus:border-indigo-500" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <label className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1 block">Статус</label>
-                <select value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})} className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-300 outline-none focus:border-indigo-500 cursor-pointer">
+                <select value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})} className="w-full min-w-0 truncate bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-300 outline-none focus:border-indigo-500 cursor-pointer">
                   <option value="FREE">Свободен</option>
+                  <option value="BOOKED">Забронирован</option>
+                  <option value="IN_USE">Занят</option>
                   <option value="REPAIR">Ремонт</option>
                 </select>
               </div>
-              <div>
+              <div className="min-w-0">
                 <label className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1 block">Ряд</label>
-                <select value={formData.rowNumber} onChange={handleRowChange} className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-300 outline-none focus:border-indigo-500 cursor-pointer">
+                <select value={formData.rowNumber} onChange={handleRowChange} className="w-full min-w-0 truncate bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-300 outline-none focus:border-indigo-500 cursor-pointer">
                   {[1,2,3,4,5,6,7].map(r => <option key={r} value={r}>{r}</option>)}
                 </select>
               </div>
-              <div>
+              <div className="min-w-0">
                 <label className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1 block">Место</label>
-                <select value={formData.seatNumber} onChange={(e) => setFormData({...formData, seatNumber: Number(e.target.value)})} className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-300 outline-none focus:border-indigo-500 cursor-pointer">
+                <select value={formData.seatNumber} onChange={(e) => setFormData({...formData, seatNumber: Number(e.target.value)})} className="w-full min-w-0 truncate bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-300 outline-none focus:border-indigo-500 cursor-pointer">
                   {availableSeatsForRow.length > 0 ? availableSeatsForRow.map(s => <option key={s} value={s}>{s}</option>) : (<option value="">Нет мест</option>)}
                 </select>
               </div>
@@ -221,11 +226,11 @@ export default function PlaceInfo({ pc, allPcs = [], token, role, onClose, refre
               <input type="text" value={formData.processor} onChange={(e) => setFormData({...formData, processor: e.target.value})} className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-300 outline-none focus:border-indigo-500" />
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <div>
+              <div className="min-w-0">
                 <label className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1 block">ОЗУ</label>
                 <input type="text" value={formData.ram} onChange={(e) => setFormData({...formData, ram: e.target.value})} className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-300 outline-none focus:border-indigo-500" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <label className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1 block">Видеокарта</label>
                 <input type="text" value={formData.gpu} onChange={(e) => setFormData({...formData, gpu: e.target.value})} className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-300 outline-none focus:border-indigo-500" />
               </div>
@@ -261,19 +266,19 @@ export default function PlaceInfo({ pc, allPcs = [], token, role, onClose, refre
             {!isAdmin && !isRepair && (
               <div className="mb-4 bg-zinc-950/50 rounded-lg border border-zinc-800/60 p-3">
                 <div className="grid grid-cols-2 gap-2 mb-3">
-                  <div className="col-span-2">
+                  <div className="col-span-2 min-w-0">
                     <label className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1 block">Дата</label>
                     <input type="date" min={today} value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-300 outline-none focus:border-zinc-700 [color-scheme:dark] cursor-pointer"/>
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <label className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1 block">Время начала</label>
-                    <select value={selectedTime} onChange={(e) => setSelectedTime(e.target.value)} className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-300 outline-none focus:border-zinc-700 cursor-pointer">
+                    <select value={selectedTime} onChange={(e) => setSelectedTime(e.target.value)} className="w-full min-w-0 truncate bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-300 outline-none focus:border-zinc-700 cursor-pointer">
                       {availableStartTimes.length > 0 ? availableStartTimes.map(time => <option key={time} value={time}>{time}</option>) : (<option value="">Нет свободного времени</option>)}
                     </select>
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <label className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1 block">Длительность</label>
-                    <select value={selectedDuration} onChange={handleDurationChange} className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-300 outline-none focus:border-zinc-700 cursor-pointer">
+                    <select value={selectedDuration} onChange={handleDurationChange} className="w-full min-w-0 truncate bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-300 outline-none focus:border-zinc-700 cursor-pointer">
                       {DURATIONS.map(dur => <option key={dur.value} value={dur.value}>{dur.label}</option>)}
                     </select>
                   </div>
@@ -285,8 +290,7 @@ export default function PlaceInfo({ pc, allPcs = [], token, role, onClose, refre
               </div>
             )}
 
-            {/* БЛОК С РЕАЛЬНЫМИ ДАННЫМИ АДМИНА */}
-            {isAdmin && isBooked && activeBooking && (
+            {isAdmin && isInUse && activeBooking && (
               <div className="mb-4 p-3 bg-sky-500/10 border border-sky-500/20 rounded-lg flex flex-col gap-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-zinc-400">Клиент:</span>

@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { bookPc } from '../api/bookingApi';
 
-// Экспортируем useCreateBooking
 export const useCreateBooking = (token, onSuccess) => {
   const [isBooking, setIsBooking] = useState(false);
   const [error, setError] = useState(null);
@@ -11,10 +10,9 @@ export const useCreateBooking = (token, onSuccess) => {
     setError(null);
     try {
       await bookPc(token, pcId, date, time, duration);
-      alert('Заявка на бронирование отправлена! Ожидайте подтверждения администратора.');
       if (onSuccess) onSuccess();
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Ошибка при бронировании');
     } finally {
       setIsBooking(false);
     }

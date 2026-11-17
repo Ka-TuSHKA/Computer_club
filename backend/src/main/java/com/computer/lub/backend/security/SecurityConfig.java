@@ -1,17 +1,13 @@
 package com.computer.lub.backend.security;
 
-import com.computer.lub.backend.entity.Booking;
-import com.computer.lub.backend.entity.Pc;
-import com.computer.lub.backend.entity.Session;
-import com.computer.lub.backend.entity.User;
-import com.computer.lub.backend.repository.BookingRepository;
-import com.computer.lub.backend.repository.PcRepository;
-import com.computer.lub.backend.repository.SessionRepository;
-import com.computer.lub.backend.repository.UserRepository;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod; // <-- ДОБАВЛЕН ИМПОРТ
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -27,8 +23,18 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.time.LocalDateTime;
-import java.util.List;
+import com.computer.lub.backend.entity.Booking;
+import com.computer.lub.backend.entity.BookingStatus;
+import com.computer.lub.backend.entity.Pc;
+import com.computer.lub.backend.entity.PcStatus;
+import com.computer.lub.backend.entity.Role;
+import com.computer.lub.backend.entity.Session;
+import com.computer.lub.backend.entity.SessionStatus;
+import com.computer.lub.backend.entity.User;
+import com.computer.lub.backend.repository.BookingRepository;
+import com.computer.lub.backend.repository.PcRepository;
+import com.computer.lub.backend.repository.SessionRepository;
+import com.computer.lub.backend.repository.UserRepository;
 
 @Configuration
 @EnableWebSecurity
@@ -46,7 +52,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/h2-console/**").permitAll()
 
-                // Защита ПК (только админ)
+                // Управление ПК (создание, редактирование, удаление) - только админ
                 .requestMatchers(HttpMethod.POST, "/api/pcs/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/pcs/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/pcs/**").hasRole("ADMIN")
@@ -58,7 +64,10 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/sessions/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/sessions/**").hasRole("ADMIN")
 
-                // Отменять бронь может любой
+                // Список пользователей - только админ
+                .requestMatchers("/api/users/**").hasRole("ADMIN")
+
+                // Остальные запросы требуют аутентификации
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
@@ -87,21 +96,22 @@ public class SecurityConfig {
 
     @Bean
     @Transactional
-    public CommandLineRunner initData(UserRepository userRepository, PcRepository pcRepository, BookingRepository bookingRepository, SessionRepository sessionRepository, PasswordEncoder passwordEncoder) {
+    public CommandLineRunner initData(UserRepository userRepository, PcRepository pcRepository,
+                                      BookingRepository bookingRepository, SessionRepository sessionRepository,
+                                      PasswordEncoder passwordEncoder) {
         return args -> {
-            // ... (Твой код инициализации данных остается без изменений) ...
             if (userRepository.findByUsername("admin").isEmpty()) {
                 User admin = new User();
                 admin.setUsername("admin");
                 admin.setPassword(passwordEncoder.encode("admin"));
-                admin.setRole("ADMIN");
+                admin.setRole(Role.ADMIN);
                 userRepository.save(admin);
             }
             if (userRepository.findByUsername("client").isEmpty()) {
                 User client = new User();
                 client.setUsername("client");
                 client.setPassword(passwordEncoder.encode("client"));
-                client.setRole("USER");
+                client.setRole(Role.USER);
                 userRepository.save(client);
             }
 
@@ -120,63 +130,18 @@ public class SecurityConfig {
                     Pc pc = new Pc();
                     pc.setRowNumber(pos[0]);
                     pc.setSeatNumber(pos[1]);
-                    pc.setPcNumber("PC-" + pcCounter + java.util.UUID.randomUUID().toString().substring(0, 4).toUpperCase());
+                    String suffix = UUID.randomUUID().toString().substring(0, 4).toUpperCase();
+                    pc.setPcNumber("PC-" + pcCounter + suffix);
                     pc.setProcessor(pos[0] <= 2 ? "Intel Core i5-12400" : "Intel Core i7-12700");
                     pc.setRam(pos[0] <= 2 ? "16 GB" : "32 GB");
                     pc.setGpu(pos[0] <= 2 ? "NVIDIA RTX 3060" : "NVIDIA RTX 4070 Ti");
-                    pc.setStatus(pcCounter == 3 ? "REPAIR" : "FREE");
+                    pc.setStatus(pcCounter == 3 ? PcStatus.REPAIR : PcStatus.FREE);
                     pc.setComment(pcCounter == 3 ? "Не работает клавиатура" : "");
                     pcRepository.save(pc);
                     pcCounter++;
                 }
             }
 
-            if (bookingRepository.count() == 0 && sessionRepository.count() == 0) {
-                User client = userRepository.findByUsername("client").orElse(null);
-                List<Pc> allPcs = pcRepository.findAll();
-
-                if (client != null && allPcs.size() >= 10) {
-                    Booking pendingBooking = new Booking();
-                    pendingBooking.setPc(allPcs.get(0));
-                    pendingBooking.setUser(client);
-                    pendingBooking.setStartTime(LocalDateTime.now().plusHours(1));
-                    pendingBooking.setEndTime(LocalDateTime.now().plusHours(3));
-                    pendingBooking.setStatus("PENDING");
-                    bookingRepository.save(pendingBooking);
-
-                    Booking confirmedBooking = new Booking();
-                    confirmedBooking.setPc(allPcs.get(6));
-                    confirmedBooking.setUser(client);
-                    confirmedBooking.setStartTime(LocalDateTime.now().plusHours(2));
-                    confirmedBooking.setEndTime(LocalDateTime.now().plusHours(4));
-                    confirmedBooking.setStatus("CONFIRMED");
-                    bookingRepository.save(confirmedBooking);
-
-                    Booking cancelledBooking = new Booking();
-                    cancelledBooking.setPc(allPcs.get(1));
-                    cancelledBooking.setUser(client);
-                    cancelledBooking.setStartTime(LocalDateTime.now().minusDays(1));
-                    cancelledBooking.setEndTime(LocalDateTime.now().minusDays(1).plusHours(2));
-                    cancelledBooking.setStatus("CANCELLED");
-                    bookingRepository.save(cancelledBooking);
-
-                    Session activeSession = new Session();
-                    activeSession.setPc(allPcs.get(9));
-                    activeSession.setUser(client);
-                     activeSession.setBooking(confirmedBooking);
-                    activeSession.setStartTime(LocalDateTime.now().minusHours(1));
-                    activeSession.setStatus("ACTIVE");
-                    sessionRepository.save(activeSession);
-
-                    Session finishedSession = new Session();
-                    finishedSession.setPc(allPcs.get(3));
-                    finishedSession.setUser(client);
-                    finishedSession.setStartTime(LocalDateTime.now().minusDays(1).minusHours(3));
-                    finishedSession.setEndTime(LocalDateTime.now().minusDays(1).minusHours(1));
-                    finishedSession.setStatus("FINISHED");
-                    sessionRepository.save(finishedSession);
-                }
-            }
         };
     }
 }

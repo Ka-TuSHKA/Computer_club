@@ -1,7 +1,10 @@
 package com.computer.lub.backend.dto;
 
-import lombok.Data;
 import java.time.LocalDateTime;
+
+import com.computer.lub.backend.entity.SessionStatus;
+
+import lombok.Data;
 
 @Data
 public class SessionResponse {
@@ -10,5 +13,5 @@ public class SessionResponse {
     private String username;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
-    private String status;
+    private SessionStatus status;
 }

@@ -1,7 +1,10 @@
 package com.computer.lub.backend.dto;
 
-import lombok.Data;
 import java.time.LocalDateTime;
+
+import com.computer.lub.backend.entity.BookingStatus;
+
+import lombok.Data;
 
 @Data
 public class BookingResponse {
@@ -10,5 +13,5 @@ public class BookingResponse {
     private String username;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
-    private String status;
+    private BookingStatus status;
 }

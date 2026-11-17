@@ -25,7 +25,6 @@
 
         <!-- Imports -->
         <module name="UnusedImports"/>
-        <module name="AvoidStarImport"/>
 
         <!-- Blocks -->
         <module name="NeedBraces"/>

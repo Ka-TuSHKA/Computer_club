@@ -1,6 +1,7 @@
 package com.computer.lub.backend.security;
 
 import com.computer.lub.backend.entity.Pc;
+import com.computer.lub.backend.entity.PcStatus;
 import com.computer.lub.backend.repository.BookingRepository;
 import com.computer.lub.backend.repository.PcRepository;
 import org.junit.jupiter.api.Test;
@@ -51,7 +52,7 @@ class SecurityAccessTest {
     void shouldDenyCreatePcForUser() throws Exception {
         mockMvc.perform(post("/api/pcs")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"pcNumber\":\"PC-HACK\",\"status\":\"FREE\"}"))
+                .content("{\"pcNumber\":\"PC-HACK\",\"status\":\"FREE\",\"rowNumber\":1,\"seatNumber\":1}"))
                 .andExpect(status().isForbidden());
     }
 
@@ -76,12 +77,18 @@ class SecurityAccessTest {
     @WithMockUser(roles = "ADMIN")
     void shouldAllowCreatePcForAdmin() throws Exception {
         Pc mockPc = new Pc();
+        mockPc.setId(1L);
         mockPc.setPcNumber("PC-NEW");
+        mockPc.setStatus(PcStatus.FREE);
+
         when(pcRepository.save(any(Pc.class))).thenReturn(mockPc);
+
+        // Передаем все обязательные поля, чтобы пройти валидацию
+        String jsonContent = "{\"pcNumber\":\"PC-NEW\",\"status\":\"FREE\",\"rowNumber\":1,\"seatNumber\":1}";
 
         mockMvc.perform(post("/api/pcs")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"pcNumber\":\"PC-NEW\",\"status\":\"FREE\"}"))
+                .content(jsonContent))
                 .andExpect(status().isOk());
     }
 
@@ -89,7 +96,7 @@ class SecurityAccessTest {
     @Test
     @WithMockUser(roles = "USER")
     void shouldAllowGetPcsForUser() throws Exception {
-        when(pcRepository.findAllByOrderByRowNumberAscSeatNumberAsc()).thenReturn(java.util.List.of());
+        when(pcRepository.findAllByDeletedFalseOrderByRowNumberAscSeatNumberAsc()).thenReturn(java.util.List.of());
         mockMvc.perform(get("/api/pcs"))
                 .andExpect(status().isOk());
     }

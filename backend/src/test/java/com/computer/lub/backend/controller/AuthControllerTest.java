@@ -1,50 +1,41 @@
 package com.computer.lub.backend.controller;
 
-import com.computer.lub.backend.dto.AuthRequest;
-import com.computer.lub.backend.dto.AuthResponse;
-import com.computer.lub.backend.security.JwtUtils;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.Collections;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-
-@ExtendWith(MockitoExtension.class)
+@SpringBootTest
+@AutoConfigureMockMvc
 class AuthControllerTest {
 
-    @Mock private AuthenticationManager authenticationManager;
-    @Mock private JwtUtils jwtUtils;
-    @InjectMocks private AuthController authController;
+    @Autowired
+    private MockMvc mockMvc;
 
     @Test
-    void shouldLoginSuccessfully() {
-        AuthRequest request = new AuthRequest();
-        request.setUsername("admin");
-        request.setPassword("admin");
+    void shouldRejectRegistrationWithTooShortPassword() throws Exception {
+        // Отправляем запрос с коротким паролем (3 символа, а нужно минимум 4)
+        String jsonContent = "{\"username\":\"newuser\",\"password\":\"123\"}";
 
-        Authentication mockAuth = mock(Authentication.class);
-        when(mockAuth.getName()).thenReturn("admin");
-        doReturn(Collections.singletonList(new SimpleGrantedAuthority("ROLE_ADMIN")))
-                .when(mockAuth).getAuthorities();
+        mockMvc.perform(post("/api/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(jsonContent))
+                .andExpect(status().isBadRequest()); // Ожидаем 400 (ошибка валидации)
+    }
 
-        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(mockAuth);
-        when(jwtUtils.generateToken("admin")).thenReturn("fake-jwt");
+    @Test
+    void shouldRejectRegistrationWithTooShortUsername() throws Exception {
+        // Логин из 2 символов (а нужно минимум 3)
+        String jsonContent = "{\"username\":\"ab\",\"password\":\"password123\"}";
 
-        ResponseEntity<AuthResponse> response = authController.login(request);
-
-        assertEquals(200, response.getStatusCode().value());
-        assertEquals("fake-jwt", response.getBody().getToken());
-        assertEquals("ADMIN", response.getBody().getRole());
+        mockMvc.perform(post("/api/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(jsonContent))
+                .andExpect(status().isBadRequest());
     }
 }

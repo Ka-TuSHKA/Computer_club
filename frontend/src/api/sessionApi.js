@@ -1,23 +1,48 @@
-const API_URL = 'http://localhost:8080/api';
+const API_URL = 'http://localhost:8080/api/sessions';
 
 export const fetchSessions = async (token) => {
-  const res = await fetch(`${API_URL}/sessions`, { headers: { 'Authorization': `Bearer ${token}` } });
-  if (!res.ok) throw new Error('Ошибка загрузки сеансов');
-  return res.json();
+  const response = await fetch(API_URL, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) throw new Error('Не удалось загрузить сеансы');
+  return response.json();
 };
 
 export const startSession = async (token, bookingId) => {
-  const res = await fetch(`${API_URL}/sessions/start/${bookingId}`, {
+  const response = await fetch(`${API_URL}/start/${bookingId}`, {
     method: 'POST',
-    headers: { 'Authorization': `Bearer ${token}` }
+    headers: { Authorization: `Bearer ${token}` },
   });
-  if (!res.ok) throw new Error('Ошибка старта сеанса');
+  if (!response.ok) {
+    const msg = await response.text();
+    throw new Error(msg || 'Ошибка при запуске сеанса');
+  }
+};
+
+// Запуск сеанса без брони: клиент выбирается из списка,
+// длительность обязательна
+export const startWalkInSession = async (token, pcId, username, duration) => {
+  const response = await fetch(`${API_URL}/walk-in`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ pcId, username, duration }),
+  });
+  if (!response.ok) {
+    const msg = await response.text();
+    throw new Error(msg || 'Ошибка при создании сеанса');
+  }
 };
 
 export const finishSession = async (token, sessionId) => {
-  const res = await fetch(`${API_URL}/sessions/${sessionId}/finish`, {
+  const response = await fetch(`${API_URL}/${sessionId}/finish`, {
     method: 'PUT',
-    headers: { 'Authorization': `Bearer ${token}` }
+    headers: { Authorization: `Bearer ${token}` },
   });
-  if (!res.ok) throw new Error('Ошибка завершения сеанса');
+  if (!response.ok) {
+    const msg = await response.text();
+    throw new Error(msg || 'Ошибка при завершении сеанса');
+  }
 };

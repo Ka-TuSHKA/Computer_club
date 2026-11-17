@@ -1,6 +1,5 @@
 package com.computer.lub.backend.security;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,13 +22,9 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import com.computer.lub.backend.entity.Booking;
-import com.computer.lub.backend.entity.BookingStatus;
 import com.computer.lub.backend.entity.Pc;
 import com.computer.lub.backend.entity.PcStatus;
 import com.computer.lub.backend.entity.Role;
-import com.computer.lub.backend.entity.Session;
-import com.computer.lub.backend.entity.SessionStatus;
 import com.computer.lub.backend.entity.User;
 import com.computer.lub.backend.repository.BookingRepository;
 import com.computer.lub.backend.repository.PcRepository;
@@ -87,7 +82,9 @@ public class SecurityConfig {
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder() { return new BCryptPasswordEncoder(); }
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {

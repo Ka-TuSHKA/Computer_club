@@ -71,7 +71,7 @@ public class PcService {
 
         if (bookingRepository.existsByPcId(id) || sessionRepository.existsByPcId(id)) {
             return ResponseEntity.badRequest()
-                    .body("Нельзя удалить компьютер: с ним связаны брони или сеансы (в том числе в истории)");
+                    .body("Нельзя удалить компьютер: с ним связаны брони или сеансы");
         }
 
         pcRepository.delete(pc);

@@ -71,7 +71,8 @@ class PcServiceTest {
         updatedDetails.setStatus(PcStatus.REPAIR);
 
         when(pcRepository.findByIdAndDeletedFalse(1L)).thenReturn(Optional.of(pc));
-        when(bookingRepository.findByPcIdAndStatusIn(1L, List.of(BookingStatus.PENDING, BookingStatus.CONFIRMED))).thenReturn(List.of());
+        when(bookingRepository.findByPcIdAndStatusIn(1L, List.of(BookingStatus.PENDING,
+             BookingStatus.CONFIRMED))).thenReturn(List.of());
         when(sessionRepository.existsByPcIdAndStatus(1L, SessionStatus.ACTIVE)).thenReturn(true);
 
         ResponseEntity<?> response = pcService.updatePc(1L, updatedDetails);
@@ -108,7 +109,8 @@ class PcServiceTest {
         ResponseEntity<?> response = pcService.deletePc(1L);
 
         assertEquals(400, response.getStatusCode().value());
-        assertEquals("Нельзя удалить компьютер: с ним связаны брони или сеансы (в том числе в истории)", response.getBody());
+        assertEquals("Нельзя удалить компьютер: с ним связаны брони или сеансы",
+         response.getBody());
         verify(pcRepository, never()).delete(any(Pc.class));
     }
 }

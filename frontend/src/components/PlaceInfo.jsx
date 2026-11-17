@@ -42,6 +42,7 @@ export default function PlaceInfo({ pc, allPcs = [], token, role, onClose, refre
     if (mode === 'edit' && pc) {
       // Сохраняем текущий статус (если он REPAIR или FREE, оставляем его, BOOKED при редактировании меняем на FREE)
       const initialStatus = pc.status === 'BOOKED' ? 'FREE' : (pc.status || 'FREE');
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFormData({
         pcNumber: pc.pcNumber || '',
         rowNumber: pc.rowNumber || 1,
@@ -62,6 +63,7 @@ export default function PlaceInfo({ pc, allPcs = [], token, role, onClose, refre
         }
         if (found) break;
       }
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFormData({
         pcNumber: 'PC-NEW', rowNumber: defaultRow, seatNumber: defaultSeat,
         status: 'FREE', processor: '', ram: '', gpu: '', comment: ''
@@ -123,6 +125,7 @@ export default function PlaceInfo({ pc, allPcs = [], token, role, onClose, refre
 
   useEffect(() => {
     if (availableStartTimes.length > 0 && !availableStartTimes.includes(selectedTime)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedTime(availableStartTimes[0]);
     }
   }, [availableStartTimes, selectedTime]);
@@ -139,7 +142,6 @@ export default function PlaceInfo({ pc, allPcs = [], token, role, onClose, refre
   if (!pc && mode !== 'create') return null;
 
   const isAdmin = role === 'ADMIN';
-  const isBooked = pc?.status === 'BOOKED';
   const isRepair = pc?.status === 'REPAIR';
   const isInUse = pc?.status === 'IN_USE';
 

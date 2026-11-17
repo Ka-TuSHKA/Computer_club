@@ -10,7 +10,8 @@ import java.util.Date;
 @Component
 public class JwtUtils {
     // Используем SecretKey вместо Key
-    private final SecretKey key = Keys.hmacShaKeyFor("superSecretKeyForPrototypeComputerClubMustBeLongEnough".getBytes());
+    private final SecretKey key =
+    Keys.hmacShaKeyFor("superSecretKeyForPrototypeComputerClubMustBeLongEnough".getBytes());
 
     public String generateToken(String username) {
         return Jwts.builder()

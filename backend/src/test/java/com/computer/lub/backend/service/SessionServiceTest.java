@@ -12,6 +12,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.time.LocalDateTime;
@@ -33,6 +34,7 @@ class SessionServiceTest {
     @Mock private UserRepository userRepository;
     @Mock private PcStatusService pcStatusService;
     @Mock private SimpMessagingTemplate messagingTemplate;
+    @Mock private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private SessionService sessionService;
@@ -123,6 +125,7 @@ class SessionServiceTest {
         activeSession.setId(1L);
         activeSession.setPc(mockPc);
         activeSession.setBooking(mockBooking);
+        activeSession.setUser(mockUser);
         activeSession.setStartTime(LocalDateTime.now().minusHours(1));
         activeSession.setStatus(SessionStatus.ACTIVE);
 

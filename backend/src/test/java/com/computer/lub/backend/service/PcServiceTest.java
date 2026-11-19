@@ -1,5 +1,6 @@
 package com.computer.lub.backend.service;
 
+import com.computer.lub.backend.entity.Booking;
 import com.computer.lub.backend.entity.BookingStatus;
 import com.computer.lub.backend.entity.Pc;
 import com.computer.lub.backend.entity.PcStatus;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
@@ -30,6 +32,7 @@ class PcServiceTest {
     @Mock private BookingRepository bookingRepository;
     @Mock private SessionRepository sessionRepository;
     @Mock private PcStatusService pcStatusService;
+    @Mock private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks private PcService pcService;
 
@@ -83,34 +86,48 @@ class PcServiceTest {
     }
 
     @Test
-    void shouldDeletePcWithoutHistory() {
+    void shouldSoftDeletePcWithoutActiveHistory() {
         Pc freePc = new Pc();
         freePc.setId(1L);
         freePc.setStatus(PcStatus.FREE);
+        freePc.setDeleted(false); // Изначально не удален
 
-        when(pcRepository.findById(1L)).thenReturn(Optional.of(freePc));
-        when(bookingRepository.existsByPcId(1L)).thenReturn(false);
-        when(sessionRepository.existsByPcId(1L)).thenReturn(false);
+        when(pcRepository.findByIdAndDeletedFalse(1L)).thenReturn(Optional.of(freePc));
+        // Нет активных броней
+        when(bookingRepository.findByPcIdAndStatusIn(eq(1L), anyList())).thenReturn(List.of());
+        // Нет активных сеансов
+        when(sessionRepository.existsByPcIdAndStatus(1L, SessionStatus.ACTIVE)).thenReturn(false);
 
         ResponseEntity<?> response = pcService.deletePc(1L);
 
         assertEquals(200, response.getStatusCode().value());
-        verify(pcRepository, times(1)).delete(freePc);
+
+        // Проверяем, что флаг мягкого удаления установлен в true
+        assertTrue(freePc.getDeleted());
+        // Проверяем, что мы ВЫЗВАЛИ save, а не delete
+        verify(pcRepository, times(1)).save(freePc);
+        verify(pcRepository, never()).delete(any(Pc.class));
     }
 
     @Test
-    void shouldNotDeletePcWithHistory() {
+    void shouldNotDeletePcWithActiveHistory() {
         Pc pc = new Pc();
         pc.setId(1L);
+        pc.setDeleted(false);
 
-        when(pcRepository.findById(1L)).thenReturn(Optional.of(pc));
-        when(bookingRepository.existsByPcId(1L)).thenReturn(true);
+        when(pcRepository.findByIdAndDeletedFalse(1L)).thenReturn(Optional.of(pc));
+
+        // Имитируем наличие активной брони (например, CONFIRMED)
+        Booking activeBooking = new Booking();
+        when(bookingRepository.findByPcIdAndStatusIn(eq(1L), anyList()))
+                .thenReturn(List.of(activeBooking));
 
         ResponseEntity<?> response = pcService.deletePc(1L);
 
         assertEquals(400, response.getStatusCode().value());
-        assertEquals("Нельзя удалить компьютер: с ним связаны брони или сеансы",
-         response.getBody());
-        verify(pcRepository, never()).delete(any(Pc.class));
+        assertEquals("Нельзя удалить компьютер: на нем есть активные брони или сеансы", response.getBody());
+
+        // Проверяем, что мы НЕ вызывали save (ничего не изменилось)
+        verify(pcRepository, never()).save(any(Pc.class));
     }
 }

@@ -205,8 +205,6 @@ export default function PlaceInfo({ pc, allPcs = [], token, role, onClose, refre
                 <label className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1 block">Статус</label>
                 <select value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})} className="w-full min-w-0 truncate bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-300 outline-none focus:border-indigo-500 cursor-pointer">
                   <option value="FREE">Свободен</option>
-                  <option value="BOOKED">Забронирован</option>
-                  <option value="IN_USE">Занят</option>
                   <option value="REPAIR">Ремонт</option>
                 </select>
               </div>

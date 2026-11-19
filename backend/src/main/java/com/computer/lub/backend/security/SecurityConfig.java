@@ -35,7 +35,7 @@ import com.computer.lub.backend.repository.UserRepository;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Bean
+        @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, JwtFilter jwtFilter) throws Exception {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -59,8 +59,11 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/sessions/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/sessions/**").hasRole("ADMIN")
 
-                // Список пользователей - только админ
-                .requestMatchers("/api/users/**").hasRole("ADMIN")
+                // Список всех пользователей - только админ
+                .requestMatchers(HttpMethod.GET, "/api/users").hasRole("ADMIN")
+
+                // Личный профиль доступен всем авторизованным
+                .requestMatchers("/api/users/profile").authenticated()
 
                 // Остальные запросы требуют аутентификации
                 .anyRequest().authenticated()
@@ -72,7 +75,8 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173"));
+        configuration.setAllowedOrigins(List.of("http://localhost:5173",
+            "http://localhost:3000"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);

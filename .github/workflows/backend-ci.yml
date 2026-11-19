@@ -46,11 +46,19 @@ jobs:
           path: backend/build/libs/*.jar
           retention-days: 7
 
-      # Загружаем HTML-отчет JaCoCo
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
-        if: always() # Загружаем отчет, даже если тесты упали
+        if: always()
         with:
           name: jacoco-report
           path: backend/build/reports/jacoco/test/html/
+          retention-days: 7
+
+      # HTML-отчёт JUnit о пройденных тестах и времени выполнения
+      - name: Upload JUnit test report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: junit-report
+          path: backend/build/reports/tests/test/
           retention-days: 7

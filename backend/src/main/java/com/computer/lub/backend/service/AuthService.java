@@ -1,5 +1,6 @@
 package com.computer.lub.backend.service;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -12,6 +13,7 @@ import com.computer.lub.backend.dto.AuthRequest;
 import com.computer.lub.backend.dto.AuthResponse;
 import com.computer.lub.backend.entity.Role;
 import com.computer.lub.backend.entity.User;
+import com.computer.lub.backend.event.AuditEvent;
 import com.computer.lub.backend.repository.UserRepository;
 import com.computer.lub.backend.security.JwtUtils;
 
@@ -25,6 +27,7 @@ public class AuthService {
     private final JwtUtils jwtUtils;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final ApplicationEventPublisher eventPublisher;
 
     public AuthResponse login(AuthRequest request) {
         Authentication auth = authenticationManager.authenticate(
@@ -32,6 +35,9 @@ public class AuthService {
         );
         String token = jwtUtils.generateToken(auth.getName());
         String role = auth.getAuthorities().iterator().next().getAuthority().replace("ROLE_", "");
+
+        eventPublisher.publishEvent(new AuditEvent(this, "LOGIN", auth.getName(), "role=" + role));
+
         return new AuthResponse(auth.getName(), role, token);
     }
 
@@ -46,6 +52,8 @@ public class AuthService {
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole(Role.USER);
         userRepository.save(user);
+
+        eventPublisher.publishEvent(new AuditEvent(this, "REGISTER", request.getUsername(), "role=USER"));
 
         return ResponseEntity.ok("Пользователь успешно зарегистрирован");
     }

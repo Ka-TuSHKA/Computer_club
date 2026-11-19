@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,7 @@ import com.computer.lub.backend.entity.Pc;
 import com.computer.lub.backend.entity.PcStatus;
 import com.computer.lub.backend.entity.SessionStatus;
 import com.computer.lub.backend.entity.User;
+import com.computer.lub.backend.event.AuditEvent;
 import com.computer.lub.backend.exception.NoAccessException;
 import com.computer.lub.backend.repository.BookingRepository;
 import com.computer.lub.backend.repository.PcRepository;
@@ -39,6 +41,7 @@ public class BookingService {
     private final SessionRepository sessionRepository;
     private final PcStatusService pcStatusService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
     public List<BookingResponse> getBookings(String username, boolean isAdmin) {
@@ -114,6 +117,9 @@ public class BookingService {
 
         pcStatusService.syncStatus(pc);
         messagingTemplate.convertAndSend("/topic/bookings", "update");
+
+        eventPublisher.publishEvent(new AuditEvent(this, "CREATE_BOOKING",
+        username, "pcId=" + pc.getId() + ", start=" + startTime));
     }
 
     @Transactional
@@ -128,6 +134,9 @@ public class BookingService {
         bookingRepository.save(booking);
         pcStatusService.syncStatus(booking.getPc());
         messagingTemplate.convertAndSend("/topic/bookings", "update");
+
+        eventPublisher.publishEvent(new AuditEvent(this, "CONFIRM_BOOKING",
+        booking.getUser().getUsername(), "bookingId=" + id));
     }
 
     @Transactional
@@ -150,6 +159,8 @@ public class BookingService {
         bookingRepository.save(booking);
         pcStatusService.syncStatus(booking.getPc());
         messagingTemplate.convertAndSend("/topic/bookings", "update");
+
+        eventPublisher.publishEvent(new AuditEvent(this, "CANCEL_BOOKING", username, "bookingId=" + id));
     }
 
     @Scheduled(fixedRate = 60000)

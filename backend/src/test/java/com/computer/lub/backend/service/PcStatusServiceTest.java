@@ -12,6 +12,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -28,6 +29,7 @@ class PcStatusServiceTest {
     @Mock private PcRepository pcRepository;
     @Mock private BookingRepository bookingRepository;
     @Mock private SessionRepository sessionRepository;
+    @Mock private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private PcStatusService pcStatusService;

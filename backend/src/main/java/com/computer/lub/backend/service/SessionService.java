@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,7 @@ import com.computer.lub.backend.entity.PcStatus;
 import com.computer.lub.backend.entity.Session;
 import com.computer.lub.backend.entity.SessionStatus;
 import com.computer.lub.backend.entity.User;
+import com.computer.lub.backend.event.AuditEvent;
 import com.computer.lub.backend.repository.BookingRepository;
 import com.computer.lub.backend.repository.PcRepository;
 import com.computer.lub.backend.repository.SessionRepository;
@@ -35,6 +37,7 @@ public class SessionService {
     private final UserRepository userRepository;
     private final PcStatusService pcStatusService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final ApplicationEventPublisher eventPublisher;
 
     public List<SessionResponse> getSessions(String username, boolean isAdmin) {
         List<Session> sessions = isAdmin
@@ -79,6 +82,9 @@ public class SessionService {
         pcStatusService.syncStatus(pc);
         messagingTemplate.convertAndSend("/topic/pcs", "update");
         messagingTemplate.convertAndSend("/topic/bookings", "update");
+
+        eventPublisher.publishEvent(new AuditEvent(this, "START_SESSION",
+        booking.getUser().getUsername(), "pcId=" + pc.getId()));
     }
 
     @Transactional
@@ -118,6 +124,9 @@ public class SessionService {
 
         pcStatusService.syncStatus(pc);
         messagingTemplate.convertAndSend("/topic/pcs", "update");
+
+        eventPublisher.publishEvent(new AuditEvent(this, "START_WALK_IN_SESSION",
+        user.getUsername(), "pcId=" + pc.getId()));
     }
 
     @Transactional
@@ -141,6 +150,9 @@ public class SessionService {
         pcStatusService.syncStatus(session.getPc());
         messagingTemplate.convertAndSend("/topic/pcs", "update");
         messagingTemplate.convertAndSend("/topic/bookings", "update");
+
+        eventPublisher.publishEvent(new AuditEvent(this, "FINISH_SESSION",
+        session.getUser().getUsername(), "sessionId=" + id));
     }
 
     @Scheduled(fixedRate = 60000)

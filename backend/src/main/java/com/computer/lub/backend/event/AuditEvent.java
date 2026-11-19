@@ -13,7 +13,10 @@ public class AuditEvent extends ApplicationEvent {
         this.username = username;
         this.details = details;
     }
-    public String getAction() { return action; }
-    public String getUsername() { return username; }
-    public String getDetails() { return details; }
+    public String getAction() {
+        return action; }
+    public String getUsername() {
+        return username; }
+    public String getDetails() {
+        return details; }
 }

@@ -83,7 +83,8 @@ public class SessionService {
         messagingTemplate.convertAndSend("/topic/pcs", "update");
         messagingTemplate.convertAndSend("/topic/bookings", "update");
 
-        eventPublisher.publishEvent(new AuditEvent(this, "START_SESSION", booking.getUser().getUsername(), "pcId=" + pc.getId()));
+        eventPublisher.publishEvent(new AuditEvent(this, "START_SESSION",
+        booking.getUser().getUsername(), "pcId=" + pc.getId()));
     }
 
     @Transactional
@@ -124,7 +125,8 @@ public class SessionService {
         pcStatusService.syncStatus(pc);
         messagingTemplate.convertAndSend("/topic/pcs", "update");
 
-        eventPublisher.publishEvent(new AuditEvent(this, "START_WALK_IN_SESSION", user.getUsername(), "pcId=" + pc.getId()));
+        eventPublisher.publishEvent(new AuditEvent(this, "START_WALK_IN_SESSION",
+        user.getUsername(), "pcId=" + pc.getId()));
     }
 
     @Transactional
@@ -149,7 +151,8 @@ public class SessionService {
         messagingTemplate.convertAndSend("/topic/pcs", "update");
         messagingTemplate.convertAndSend("/topic/bookings", "update");
 
-        eventPublisher.publishEvent(new AuditEvent(this, "FINISH_SESSION", session.getUser().getUsername(), "sessionId=" + id));
+        eventPublisher.publishEvent(new AuditEvent(this, "FINISH_SESSION",
+        session.getUser().getUsername(), "sessionId=" + id));
     }
 
     @Scheduled(fixedRate = 60000)

@@ -7,10 +7,10 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class AuditEventListener {
-    private static final Logger audit = LoggerFactory.getLogger("AUDIT");
+    private static final Logger AUDIT = LoggerFactory.getLogger("AUDIT");
 
     @EventListener
     public void onAudit(AuditEvent e) {
-        audit.info("{} | user={} | {}", e.getAction(), e.getUsername(), e.getDetails());
+        AUDIT.info("{} | user={} | {}", e.getAction(), e.getUsername(), e.getDetails());
     }
 }

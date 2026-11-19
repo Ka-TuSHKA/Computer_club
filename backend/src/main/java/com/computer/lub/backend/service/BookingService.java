@@ -118,7 +118,8 @@ public class BookingService {
         pcStatusService.syncStatus(pc);
         messagingTemplate.convertAndSend("/topic/bookings", "update");
 
-        eventPublisher.publishEvent(new AuditEvent(this, "CREATE_BOOKING", username, "pcId=" + pc.getId() + ", start=" + startTime));
+        eventPublisher.publishEvent(new AuditEvent(this, "CREATE_BOOKING",
+        username, "pcId=" + pc.getId() + ", start=" + startTime));
     }
 
     @Transactional
@@ -134,7 +135,8 @@ public class BookingService {
         pcStatusService.syncStatus(booking.getPc());
         messagingTemplate.convertAndSend("/topic/bookings", "update");
 
-        eventPublisher.publishEvent(new AuditEvent(this, "CONFIRM_BOOKING", booking.getUser().getUsername(), "bookingId=" + id));
+        eventPublisher.publishEvent(new AuditEvent(this, "CONFIRM_BOOKING",
+        booking.getUser().getUsername(), "bookingId=" + id));
     }
 
     @Transactional
